@@ -45,3 +45,4 @@ backend/.env
 .env
 node_modules/
 backend/uploads/
+.env
