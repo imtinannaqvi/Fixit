@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>FixItNow Admin</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', sans-serif; background: #0F172A; color: #E5E7EB; }
+    .login-screen { display: flex; justify-content: center; align-items: center; height: 100vh; }
+    .login-card { background: #1E293B; padding: 40px; border-radius: 20px; width: 360px; }
+    .login-card h1 { color: #38BDF8; font-size: 28px; margin-bottom: 8px; }
+    .login-card p { color: #64748B; margin-bottom: 24px; }
+    input { width: 100%; padding: 12px 16px; background: #0F172A; border: 1px solid #334155; border-radius: 10px; color: #E5E7EB; font-size: 15px; margin-bottom: 14px; }
+    select { padding: 10px 14px; background: #0F172A; border: 1px solid #334155; border-radius: 10px; color: #E5E7EB; font-size: 14px; }
+    .btn { width: 100%; padding: 14px; background: #38BDF8; border: none; border-radius: 10px; color: #0F172A; font-size: 16px; font-weight: bold; cursor: pointer; }
+    .btn:hover { background: #0ea5e9; }
+    .btn-sm { padding: 6px 14px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: bold; border: none; }
+    .btn-danger { background: #450a0a; color: #f87171; border: 1px solid #7f1d1d; }
+    .btn-danger:hover { background: #7f1d1d; }
+    .btn-approve { background: #052e16; color: #4ADE80; border: 1px solid #4ADE80; }
+    .btn-approve:hover { background: #4ADE80; color: #0F172A; }
+    .btn-reject { background: #450a0a; color: #f87171; border: 1px solid #f87171; }
+    .btn-reject:hover { background: #f87171; color: #0F172A; }
+    .btn-view { background: #1e3a5f; color: #38BDF8; border: 1px solid #38BDF8; }
+    .btn-view:hover { background: #38BDF8; color: #0F172A; }
+    .btn-export { background: #052e16; color: #4ADE80; border: 1px solid #4ADE80; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: bold; }
+    .btn-export:hover { background: #4ADE80; color: #0F172A; }
+    .dashboard { display: none; }
+    .topbar { background: #1E293B; padding: 16px 32px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; }
+    .topbar h1 { color: #38BDF8; font-size: 22px; }
+    .topbar-right { display: flex; align-items: center; gap: 12px; }
+    .logout-btn { background: #334155; border: none; color: #94A3B8; padding: 8px 16px; border-radius: 8px; cursor: pointer; }
+    .content { padding: 32px; }
+    .stats-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 32px; }
+    .stat-card { background: #1E293B; padding: 20px; border-radius: 16px; border: 1px solid #334155; cursor: default; transition: transform 0.1s; }
+    .stat-card:hover { transform: translateY(-2px); }
+    .stat-card .value { font-size: 32px; font-weight: bold; color: #38BDF8; }
+    .stat-card .label { color: #64748B; font-size: 14px; margin-top: 4px; }
+    .stat-card.alert .value { color: #f97316; }
+    .stat-card.green .value { color: #4ADE80; }
+
+    /* Charts */
+    .charts-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 32px; }
+    .chart-card { background: #1E293B; border-radius: 16px; padding: 20px; border: 1px solid #334155; }
+    .chart-card h3 { color: #E5E7EB; font-size: 16px; font-weight: bold; margin-bottom: 16px; }
+    .chart-wrapper { position: relative; height: 220px; }
+
+    .tabs { display: flex; gap: 8px; margin-bottom: 24px; flex-wrap: wrap; align-items: center; }
+    .tab { padding: 10px 20px; border-radius: 10px; cursor: pointer; background: #1E293B; color: #94A3B8; border: none; font-size: 14px; position: relative; }
+    .tab.active { background: #38BDF8; color: #0F172A; font-weight: bold; }
+    .tab .badge-count { position: absolute; top: -6px; right: -6px; background: #f97316; color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 11px; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+
+    /* Search & Filter bar */
+    .toolbar { display: flex; gap: 12px; margin-bottom: 16px; align-items: center; flex-wrap: wrap; }
+    .search-input { flex: 1; min-width: 200px; padding: 10px 16px; background: #1E293B; border: 1px solid #334155; border-radius: 10px; color: #E5E7EB; font-size: 14px; }
+    .search-input::placeholder { color: #64748B; }
+
+    .table-container { background: #1E293B; border-radius: 16px; overflow: hidden; border: 1px solid #334155; }
+    table { width: 100%; border-collapse: collapse; }
+    th { background: #0F172A; padding: 14px 16px; text-align: left; color: #64748B; font-size: 13px; text-transform: uppercase; }
+    td { padding: 12px 16px; border-bottom: 1px solid #0F172A; font-size: 14px; vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(56,189,248,0.04); }
+
+    .badge { padding: 4px 10px; border-radius: 8px; font-size: 12px; font-weight: bold; }
+    .badge-homeowner { background: #1e3a5f; color: #38BDF8; }
+    .badge-technician { background: #052e16; color: #4ADE80; }
+    .badge-pending { background: #1c1917; color: #f97316; }
+    .badge-confirmed { background: #052e16; color: #4ade80; }
+    .badge-completed { background: #052e16; color: #4ade80; }
+    .badge-cancelled { background: #450a0a; color: #f87171; }
+    .badge-inprogress { background: #1e3a5f; color: #38bdf8; }
+    .badge-verified { background: #052e16; color: #4ADE80; border: 1px solid #4ADE80; }
+    .badge-unverified { background: #1c1917; color: #f97316; }
+    .badge-rejected-v { background: #450a0a; color: #f87171; }
+
+    .error { color: #f87171; font-size: 14px; margin-top: 8px; text-align: center; }
+    .section { display: none; }
+    .section.active { display: block; }
+
+    /* Verification cards */
+    .verify-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 20px; }
+    .verify-card { background: #1E293B; border-radius: 16px; padding: 20px; border: 1px solid #334155; }
+    .verify-card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+    .verify-avatar { width: 48px; height: 48px; border-radius: 24px; background: #38BDF8; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: bold; color: #0F172A; flex-shrink: 0; }
+    .verify-name { font-size: 16px; font-weight: bold; color: #E5E7EB; }
+    .verify-skill { font-size: 13px; color: #38BDF8; margin-top: 2px; }
+    .verify-doc { width: 100%; height: 160px; object-fit: cover; border-radius: 10px; margin-bottom: 14px; border: 1px solid #334155; cursor: pointer; }
+    .empty-state { text-align: center; padding: 60px 20px; color: #64748B; }
+    .empty-state .icon { font-size: 48px; margin-bottom: 16px; }
+    .empty-state p { font-size: 16px; }
+
+    /* Modals */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 1000; justify-content: center; align-items: center; padding: 20px; }
+    .modal-overlay.open { display: flex; }
+    .modal-img { max-width: 90vw; max-height: 90vh; border-radius: 12px; }
+    .modal-close { position: absolute; top: 20px; right: 20px; background: #1E293B; border: none; color: #E5E7EB; font-size: 24px; width: 44px; height: 44px; border-radius: 22px; cursor: pointer; z-index: 10; }
+
+    /* Booking Detail Modal */
+    .detail-modal { background: #1E293B; border-radius: 20px; padding: 28px; max-width: 600px; width: 100%; max-height: 90vh; overflow-y: auto; position: relative; border: 1px solid #334155; }
+    .detail-modal h2 { color: #38BDF8; font-size: 20px; margin-bottom: 4px; }
+    .detail-modal-sub { color: #64748B; font-size: 13px; margin-bottom: 20px; }
+    .detail-section { background: #0F172A; border-radius: 12px; padding: 14px; margin-bottom: 14px; }
+    .detail-section-title { color: #38BDF8; font-size: 13px; font-weight: bold; margin-bottom: 10px; }
+    .detail-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid #1E293B; }
+    .detail-row:last-child { border-bottom: none; }
+    .detail-label { color: #64748B; font-size: 13px; }
+    .detail-value { color: #E5E7EB; font-size: 13px; font-weight: 500; text-align: right; max-width: 60%; }
+    .completion-photo { width: 100%; height: 180px; object-fit: cover; border-radius: 10px; margin-top: 8px; cursor: pointer; }
+    .smart-lead-box { background: #1E293B; border-radius: 10px; padding: 12px; margin-top: 8px; }
+    .smart-lead-row { display: flex; gap: 8px; margin-bottom: 6px; font-size: 13px; }
+    .smart-lead-label { color: #38BDF8; font-weight: bold; min-width: 100px; }
+    .smart-lead-val { color: #E5E7EB; flex: 1; }
+
+    /* Pagination */
+    .pagination { display: flex; gap: 8px; margin-top: 16px; justify-content: center; align-items: center; }
+    .page-btn { background: #1E293B; border: 1px solid #334155; color: #94A3B8; padding: 6px 14px; border-radius: 8px; cursor: pointer; font-size: 13px; }
+    .page-btn.active { background: #38BDF8; color: #0F172A; border-color: #38BDF8; font-weight: bold; }
+    .page-info { color: #64748B; font-size: 13px; }
+  </style>
+</head>
+<body>
+
+<!-- Login Screen -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-card">
+    <h1>🔧 FixItNow</h1>
+    <p>Admin Dashboard</p>
+    <input type="email" id="email" placeholder="Admin Email" value="admin@fixitnow.com" />
+    <input type="password" id="password" placeholder="Password" value="admin123" />
+    <button class="btn" onclick="login()">Login</button>
+    <p class="error" id="loginError"></p>
+  </div>
+</div>
+
+<!-- Dashboard -->
+<div class="dashboard" id="dashboard">
+  <div class="topbar">
+    <h1>🔧 FixItNow Admin</h1>
+    <div class="topbar-right">
+      <span id="topbarTime" style="color:#64748B;font-size:13px;"></span>
+      <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- Stats -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="value" id="statUsers">-</div>
+        <div class="label">👥 Total Users</div>
+      </div>
+      <div class="stat-card">
+        <div class="value" id="statBookings">-</div>
+        <div class="label">📋 Total Bookings</div>
+      </div>
+      <div class="stat-card green">
+        <div class="value" id="statCompleted">-</div>
+        <div class="label">✅ Completed</div>
+      </div>
+      <div class="stat-card">
+        <div class="value" id="statRevenue">-</div>
+        <div class="label">💰 Total Revenue</div>
+      </div>
+      <div class="stat-card alert">
+        <div class="value" id="statVerifications">-</div>
+        <div class="label">🪪 Pending Verifications</div>
+      </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="charts-grid">
+      <div class="chart-card">
+        <h3>📊 Bookings by Status</h3>
+        <div class="chart-wrapper">
+          <canvas id="bookingsChart"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <h3>🎯 User Breakdown</h3>
+        <div class="chart-wrapper">
+          <canvas id="usersChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab active" onclick="showTab('users', this)">👥 Users</button>
+      <button class="tab" onclick="showTab('bookings', this)">📋 Bookings</button>
+      <button class="tab" onclick="showTab('technicians', this)">🔧 Technicians</button>
+      <button class="tab" onclick="showTab('verifications', this)" id="verifyTab">
+        🪪 Verifications
+        <span class="badge-count" id="verifyCount" style="display:none"></span>
+      </button>
+    </div>
+
+    <!-- Users Section -->
+    <div class="section active" id="usersSection">
+      <div class="toolbar">
+        <input class="search-input" type="text" id="userSearch" placeholder="🔍 Search by name or email..." oninput="filterUsers()" />
+        <select id="userRoleFilter" onchange="filterUsers()">
+          <option value="">All Roles</option>
+          <option value="homeowner">Homeowner</option>
+          <option value="technician">Technician</option>
+        </select>
+        <button class="btn-export" onclick="exportCSV('users')">📤 Export CSV</button>
+      </div>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Joined</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="usersTable"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Bookings Section -->
+    <div class="section" id="bookingsSection">
+      <div class="toolbar">
+        <input class="search-input" type="text" id="bookingSearch" placeholder="🔍 Search by issue or name..." oninput="filterBookings()" />
+        <select id="bookingStatusFilter" onchange="filterBookings()">
+          <option value="">All Status</option>
+          <option value="Pending">Pending</option>
+          <option value="Confirmed">Confirmed</option>
+          <option value="In Progress">In Progress</option>
+          <option value="Completed">Completed</option>
+          <option value="Cancelled">Cancelled</option>
+        </select>
+        <button class="btn-export" onclick="exportCSV('bookings')">📤 Export CSV</button>
+      </div>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Homeowner</th>
+              <th>Technician</th>
+              <th>Issue</th>
+              <th>Amount</th>
+              <th>Status</th>
+              <th>Payment</th>
+              <th>Date</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="bookingsTable"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Technicians Section -->
+    <div class="section" id="techniciansSection">
+      <div class="toolbar">
+        <input class="search-input" type="text" id="techSearch" placeholder="🔍 Search by name or skill..." oninput="filterTechnicians()" />
+        <select id="techVerifyFilter" onchange="filterTechnicians()">
+          <option value="">All</option>
+          <option value="verified">Verified</option>
+          <option value="pending">Pending</option>
+          <option value="none">Not Submitted</option>
+        </select>
+        <button class="btn-export" onclick="exportCSV('technicians')">📤 Export CSV</button>
+      </div>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Name</th>
+              <th>Skill</th>
+              <th>Location</th>
+              <th>Price/hr</th>
+              <th>Rating</th>
+              <th>Jobs</th>
+              <th>Available</th>
+              <th>Verified</th>
+            </tr>
+          </thead>
+          <tbody id="techniciansTable"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Verifications Section -->
+    <div class="section" id="verificationsSection">
+      <div id="verifyContent"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Doc / Image Preview Modal -->
+<div class="modal-overlay" id="docModal" onclick="closeDocModal()">
+  <button class="modal-close" onclick="closeDocModal()">✕</button>
+  <img class="modal-img" id="modalImg" src="" alt="Document" onclick="event.stopPropagation()" />
+</div>
+
+<!-- Booking Detail Modal -->
+<div class="modal-overlay" id="bookingDetailModal" onclick="closeBookingDetail()">
+  <div class="detail-modal" onclick="event.stopPropagation()">
+    <button class="modal-close" style="position:absolute;top:16px;right:16px;" onclick="closeBookingDetail()">✕</button>
+    <div id="bookingDetailContent"></div>
+  </div>
+</div>
+
+<script>
+  const BASE = 'http://localhost:5000/api/admin';
+  const BASE_URL = 'http://localhost:5000';
+  let adminToken = '';
+  let allUsers = [], allBookings = [], allTechnicians = [];
+  let bookingsChart = null, usersChart = null;
+
+  // ── Clock ──────────────────────────────────────────────────────────────────
+  function updateClock() {
+    document.getElementById('topbarTime').textContent =
+      new Date().toLocaleString('en-PK', { weekday: 'short', hour: '2-digit', minute: '2-digit' });
+  }
+  setInterval(updateClock, 1000);
+  updateClock();
+
+  // ── Auth ───────────────────────────────────────────────────────────────────
+  async function login() {
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    try {
+      const res = await fetch(`${BASE}/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      const data = await res.json();
+      if (!res.ok) { document.getElementById('loginError').textContent = data.msg; return; }
+      adminToken = data.token;
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('dashboard').style.display = 'block';
+      loadAll();
+    } catch (err) {
+      document.getElementById('loginError').textContent = 'Connection failed. Is the backend running?';
+    }
+  }
+
+  function logout() {
+    adminToken = '';
+    document.getElementById('loginScreen').style.display = 'flex';
+    document.getElementById('dashboard').style.display = 'none';
+  }
+
+  function showTab(tab, el) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById(tab + 'Section').classList.add('active');
+    if (tab === 'verifications') loadVerifications();
+  }
+
+  async function loadAll() {
+    await loadStats();
+    await loadUsers();
+    await loadBookings();
+    await loadTechnicians();
+  }
+
+  // ── Stats + Charts ─────────────────────────────────────────────────────────
+  async function loadStats() {
+    const res = await fetch(`${BASE}/stats`, { headers: { Authorization: `Bearer ${adminToken}` } });
+    const data = await res.json();
+    document.getElementById('statUsers').textContent = data.totalUsers;
+    document.getElementById('statBookings').textContent = data.totalBookings;
+    document.getElementById('statCompleted').textContent = data.completedBookings;
+    document.getElementById('statRevenue').textContent = `Rs. ${(data.totalRevenue || 0).toLocaleString()}`;
+    const pv = data.pendingVerifications || 0;
+    document.getElementById('statVerifications').textContent = pv;
+    if (pv > 0) {
+      document.getElementById('verifyCount').textContent = pv;
+      document.getElementById('verifyCount').style.display = 'flex';
+    }
+    renderCharts(data);
+  }
+
+  function renderCharts(data) {
+    // Bookings by status bar chart
+    if (bookingsChart) bookingsChart.destroy();
+    const bCtx = document.getElementById('bookingsChart').getContext('2d');
+    bookingsChart = new Chart(bCtx, {
+      type: 'bar',
+      data: {
+        labels: ['Pending', 'Confirmed', 'In Progress', 'Completed', 'Cancelled'],
+        datasets: [{
+          label: 'Bookings',
+          data: [
+            data.pendingBookings || 0,
+            (data.totalBookings - data.completedBookings - data.pendingBookings - data.cancelledBookings) || 0,
+            0,
+            data.completedBookings || 0,
+            data.cancelledBookings || 0,
+          ],
+          backgroundColor: ['#f97316', '#4ADE80', '#38BDF8', '#4ADE80', '#f87171'],
+          borderRadius: 8,
+          borderSkipped: false,
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { color: '#64748B' }, grid: { color: '#1E293B' } },
+          y: { ticks: { color: '#64748B' }, grid: { color: '#334155' }, beginAtZero: true }
+        }
+      }
+    });
+
+    // Users pie chart
+    if (usersChart) usersChart.destroy();
+    const uCtx = document.getElementById('usersChart').getContext('2d');
+    usersChart = new Chart(uCtx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Homeowners', 'Technicians'],
+        datasets: [{
+          data: [data.totalHomeowners || 0, data.totalTechnicians || 0],
+          backgroundColor: ['#38BDF8', '#4ADE80'],
+          borderColor: '#0F172A',
+          borderWidth: 3,
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom', labels: { color: '#94A3B8', padding: 16, font: { size: 13 } } }
+        },
+        cutout: '65%',
+      }
+    });
+  }
+
+  // ── Users ──────────────────────────────────────────────────────────────────
+  async function loadUsers() {
+    const res = await fetch(`${BASE}/users`, { headers: { Authorization: `Bearer ${adminToken}` } });
+    allUsers = await res.json();
+    renderUsers(allUsers);
+  }
+
+  function renderUsers(users) {
+    const tbody = document.getElementById('usersTable');
+    if (!users.length) {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#64748B;padding:30px;">No users found</td></tr>';
+      return;
+    }
+    tbody.innerHTML = users.map((u, i) => `
+      <tr>
+        <td style="color:#64748B">${i + 1}</td>
+        <td><strong>${u.name}</strong></td>
+        <td style="color:#64748B">${u.email}</td>
+        <td><span class="badge badge-${u.role}">${u.role}</span></td>
+        <td style="color:#64748B">${new Date(u.createdAt).toLocaleDateString('en-PK', { day:'numeric', month:'short', year:'numeric' })}</td>
+        <td><button class="btn-sm btn-danger" onclick="deleteUser('${u._id}')">🗑️ Delete</button></td>
+      </tr>
+    `).join('');
+  }
+
+  function filterUsers() {
+    const q = document.getElementById('userSearch').value.toLowerCase();
+    const role = document.getElementById('userRoleFilter').value;
+    const filtered = allUsers.filter(u => {
+      const matchQ = !q || u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q);
+      const matchRole = !role || u.role === role;
+      return matchQ && matchRole;
+    });
+    renderUsers(filtered);
+  }
+
+  // ── Bookings ───────────────────────────────────────────────────────────────
+  async function loadBookings() {
+    const res = await fetch(`${BASE}/bookings`, { headers: { Authorization: `Bearer ${adminToken}` } });
+    allBookings = await res.json();
+    renderBookings(allBookings);
+  }
+
+  function renderBookings(bookings) {
+    const tbody = document.getElementById('bookingsTable');
+    if (!bookings.length) {
+      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#64748B;padding:30px;">No bookings found</td></tr>';
+      return;
+    }
+    tbody.innerHTML = bookings.map((b, i) => `
+      <tr>
+        <td style="color:#64748B">${i + 1}</td>
+        <td><strong>${b.homeownerId?.name || '-'}</strong></td>
+        <td>${b.technicianId?.name || '-'}</td>
+        <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${b.issue}">${b.issue}</td>
+        <td style="color:#4ADE80;font-weight:bold;">Rs. ${(b.totalAmount || 0).toLocaleString()}</td>
+        <td><span class="badge badge-${b.status.toLowerCase().replace(' ', '')}">${b.status}</span></td>
+        <td>
+          <span style="font-size:12px;color:${b.paymentStatus === 'Paid' ? '#4ADE80' : '#f97316'}">
+            ${b.paymentStatus === 'Paid' ? '✅ Paid' : '⏳ Unpaid'}
+          </span>
+        </td>
+        <td style="color:#64748B">${new Date(b.createdAt).toLocaleDateString('en-PK', { day:'numeric', month:'short' })}</td>
+        <td style="display:flex;gap:6px;">
+          <button class="btn-sm btn-view" onclick="viewBooking('${b._id}')">👁️ View</button>
+          <button class="btn-sm btn-danger" onclick="deleteBooking('${b._id}')">🗑️</button>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  function filterBookings() {
+    const q = document.getElementById('bookingSearch').value.toLowerCase();
+    const status = document.getElementById('bookingStatusFilter').value;
+    const filtered = allBookings.filter(b => {
+      const matchQ = !q ||
+        b.issue.toLowerCase().includes(q) ||
+        (b.homeownerId?.name || '').toLowerCase().includes(q) ||
+        (b.technicianId?.name || '').toLowerCase().includes(q);
+      const matchStatus = !status || b.status === status;
+      return matchQ && matchStatus;
+    });
+    renderBookings(filtered);
+  }
+
+  // ── Booking Detail Modal ───────────────────────────────────────────────────
+  function viewBooking(id) {
+    const b = allBookings.find(x => x._id === id);
+    if (!b) return;
+
+    const hasSmartLead = b.smartLead?.faultType;
+    const hasPhoto = b.completionPhotoURL;
+
+    document.getElementById('bookingDetailContent').innerHTML = `
+      <h2>📋 Booking Details</h2>
+      <p class="detail-modal-sub">ID: ${b._id}</p>
+
+      <div class="detail-section">
+        <div class="detail-section-title">👥 Parties</div>
+        <div class="detail-row"><span class="detail-label">Homeowner</span><span class="detail-value">${b.homeownerId?.name || '-'} · ${b.homeownerId?.email || ''}</span></div>
+        <div class="detail-row"><span class="detail-label">Technician</span><span class="detail-value">${b.technicianId?.name || '-'} · ${b.technicianId?.skill || ''}</span></div>
+      </div>
+
+      <div class="detail-section">
+        <div class="detail-section-title">📋 Job Info</div>
+        <div class="detail-row"><span class="detail-label">Issue</span><span class="detail-value">${b.issue}</span></div>
+        <div class="detail-row"><span class="detail-label">Address</span><span class="detail-value">${b.address}</span></div>
+        <div class="detail-row"><span class="detail-label">Status</span><span class="detail-value"><span class="badge badge-${b.status.toLowerCase().replace(' ', '')}">${b.status}</span></span></div>
+        <div class="detail-row"><span class="detail-label">Booked On</span><span class="detail-value">${new Date(b.createdAt).toLocaleDateString('en-PK', { day:'numeric', month:'short', year:'numeric' })}</span></div>
+        ${b.completedAt ? `<div class="detail-row"><span class="detail-label">Completed On</span><span class="detail-value">${new Date(b.completedAt).toLocaleDateString('en-PK', { day:'numeric', month:'short', year:'numeric' })}</span></div>` : ''}
+      </div>
+
+      <div class="detail-section">
+        <div class="detail-section-title">💰 Payment</div>
+        <div class="detail-row"><span class="detail-label">Amount</span><span class="detail-value" style="color:#4ADE80;font-weight:bold;">Rs. ${(b.totalAmount || 0).toLocaleString()}</span></div>
+        <div class="detail-row"><span class="detail-label">Price Set By</span><span class="detail-value">${b.priceSetBy === 'ai' ? '🤖 AI Estimated' : b.priceSetBy === 'technician' ? '👨‍🔧 Technician' : '📋 Default'}</span></div>
+        <div class="detail-row"><span class="detail-label">Payment Status</span><span class="detail-value" style="color:${b.paymentStatus === 'Paid' ? '#4ADE80' : '#f97316'}">${b.paymentStatus === 'Paid' ? '✅ Paid' : '⏳ Unpaid'}</span></div>
+        ${b.priceNote ? `<div class="detail-row"><span class="detail-label">Price Note</span><span class="detail-value">${b.priceNote}</span></div>` : ''}
+      </div>
+
+      ${hasSmartLead ? `
+        <div class="detail-section">
+          <div class="detail-section-title">🤖 AI Smart Lead</div>
+          <div class="smart-lead-box">
+            <div class="smart-lead-row"><span class="smart-lead-label">Fault Type</span><span class="smart-lead-val">${b.smartLead.faultType}</span></div>
+            <div class="smart-lead-row"><span class="smart-lead-label">Severity</span><span class="smart-lead-val">${b.smartLead.severity}</span></div>
+            <div class="smart-lead-row"><span class="smart-lead-label">Description</span><span class="smart-lead-val">${b.smartLead.description}</span></div>
+            <div class="smart-lead-row"><span class="smart-lead-label">Recommendation</span><span class="smart-lead-val">${b.smartLead.recommendation}</span></div>
+            ${b.smartLead.estimatedCost ? `<div class="smart-lead-row"><span class="smart-lead-label">Est. Cost</span><span class="smart-lead-val" style="color:#4ADE80;">${b.smartLead.estimatedCost}</span></div>` : ''}
+          </div>
+          ${b.faultImageURL ? `<img src="${BASE_URL}${b.faultImageURL}" style="width:100%;height:160px;object-fit:cover;border-radius:10px;margin-top:10px;cursor:pointer;" onclick="openDocModal('${BASE_URL}${b.faultImageURL}')" title="Click to enlarge" />` : ''}
+        </div>
+      ` : ''}
+
+      ${hasPhoto ? `
+        <div class="detail-section">
+          <div class="detail-section-title">📸 Completion Photo</div>
+          <img class="completion-photo" src="${BASE_URL}${b.completionPhotoURL}" onclick="openDocModal('${BASE_URL}${b.completionPhotoURL}')" title="Click to enlarge" />
+        </div>
+      ` : ''}
+    `;
+
+    document.getElementById('bookingDetailModal').classList.add('open');
+  }
+
+  function closeBookingDetail() {
+    document.getElementById('bookingDetailModal').classList.remove('open');
+  }
+
+  // ── Technicians ────────────────────────────────────────────────────────────
+  async function loadTechnicians() {
+    const res = await fetch(`${BASE}/technicians`, { headers: { Authorization: `Bearer ${adminToken}` } });
+    allTechnicians = await res.json();
+    renderTechnicians(allTechnicians);
+  }
+
+  function renderTechnicians(techs) {
+    const tbody = document.getElementById('techniciansTable');
+    if (!techs.length) {
+      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#64748B;padding:30px;">No technicians found</td></tr>';
+      return;
+    }
+    tbody.innerHTML = techs.map((t, i) => `
+      <tr>
+        <td style="color:#64748B">${i + 1}</td>
+        <td><strong>${t.name}</strong></td>
+        <td>${t.skill}</td>
+        <td style="color:#64748B">${t.location}</td>
+        <td>Rs. ${t.price}</td>
+        <td>⭐ ${t.rating}</td>
+        <td>${t.jobsDone}</td>
+        <td>${t.available ? '<span style="color:#4ADE80">✅ Yes</span>' : '<span style="color:#f87171">❌ No</span>'}</td>
+        <td>
+          ${t.isVerified
+            ? '<span class="badge badge-verified">✅ Verified</span>'
+            : t.verificationStatus === 'pending'
+              ? '<span class="badge badge-pending">⏳ Pending</span>'
+              : t.verificationStatus === 'rejected'
+                ? '<span class="badge badge-rejected-v">❌ Rejected</span>'
+                : '<span class="badge badge-unverified">— None</span>'
+          }
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  function filterTechnicians() {
+    const q = document.getElementById('techSearch').value.toLowerCase();
+    const v = document.getElementById('techVerifyFilter').value;
+    const filtered = allTechnicians.filter(t => {
+      const matchQ = !q || t.name.toLowerCase().includes(q) || t.skill.toLowerCase().includes(q);
+      const matchV = !v ||
+        (v === 'verified' && t.isVerified) ||
+        (v === 'pending' && t.verificationStatus === 'pending') ||
+        (v === 'none' && t.verificationStatus === 'none');
+      return matchQ && matchV;
+    });
+    renderTechnicians(filtered);
+  }
+
+  // ── Verifications ──────────────────────────────────────────────────────────
+  async function loadVerifications() {
+    const res = await fetch(`${BASE}/verifications`, { headers: { Authorization: `Bearer ${adminToken}` } });
+    const techs = await res.json();
+    const container = document.getElementById('verifyContent');
+
+    if (!techs.length) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <div class="icon">✅</div>
+          <p>No pending verification requests</p>
+        </div>`;
+      return;
+    }
+
+    container.innerHTML = `
+      <p style="color:#64748B;margin-bottom:16px;">${techs.length} pending verification request${techs.length !== 1 ? 's' : ''}</p>
+      <div class="verify-grid">
+        ${techs.map(t => `
+          <div class="verify-card" id="card-${t._id}">
+            <div class="verify-card-header">
+              <div class="verify-avatar">${(t.name?.[0] || '?').toUpperCase()}</div>
+              <div>
+                <div class="verify-name">${t.name}</div>
+                <div class="verify-skill">${t.skill} · ${t.location}</div>
+              </div>
+            </div>
+            ${t.verificationIdURL
+              ? `<img class="verify-doc" src="${BASE_URL}${t.verificationIdURL}" alt="ID Document" onclick="openDocModal('${BASE_URL}${t.verificationIdURL}')" title="Click to enlarge" />`
+              : `<div style="background:#0F172A;border-radius:10px;height:100px;display:flex;align-items:center;justify-content:center;color:#64748B;margin-bottom:14px;font-size:13px;">No document uploaded</div>`
+            }
+            <div style="margin-bottom:12px;">
+              <span style="color:#64748B;font-size:12px;">⭐ ${t.rating} rating · ${t.jobsDone} jobs · ${t.experience}yr exp</span>
+            </div>
+            <div class="verify-actions">
+              <button class="btn-approve" style="flex:1;padding:10px;border-radius:10px;font-weight:bold;" onclick="approveVerification('${t._id}')">✅ Approve</button>
+              <button class="btn-reject" style="flex:1;padding:10px;border-radius:10px;font-weight:bold;" onclick="rejectVerification('${t._id}')">❌ Reject</button>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  async function approveVerification(id) {
+    if (!confirm('Approve this technician verification?')) return;
+    try {
+      const res = await fetch(`${BASE}/verifications/${id}/approve`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ note: 'Approved by admin' })
+      });
+      if (res.ok) {
+        const card = document.getElementById(`card-${id}`);
+        card.style.opacity = '0.5';
+        card.style.pointerEvents = 'none';
+        card.innerHTML += '<p style="color:#4ADE80;text-align:center;margin-top:10px;font-weight:bold;font-size:16px;">✅ Approved!</p>';
+        loadStats();
+      }
+    } catch { alert('Failed to approve'); }
+  }
+
+  async function rejectVerification(id) {
+    const note = prompt('Reason for rejection (optional):') || 'Rejected by admin';
+    try {
+      const res = await fetch(`${BASE}/verifications/${id}/reject`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ note })
+      });
+      if (res.ok) {
+        const card = document.getElementById(`card-${id}`);
+        card.style.opacity = '0.5';
+        card.style.pointerEvents = 'none';
+        card.innerHTML += '<p style="color:#f87171;text-align:center;margin-top:10px;font-weight:bold;font-size:16px;">❌ Rejected</p>';
+        loadStats();
+      }
+    } catch { alert('Failed to reject'); }
+  }
+
+  // ── Delete ─────────────────────────────────────────────────────────────────
+  async function deleteUser(id) {
+    if (!confirm('Delete this user? This cannot be undone.')) return;
+    await fetch(`${BASE}/users/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${adminToken}` } });
+    loadUsers(); loadStats();
+  }
+
+  async function deleteBooking(id) {
+    if (!confirm('Delete this booking?')) return;
+    await fetch(`${BASE}/bookings/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${adminToken}` } });
+    loadBookings(); loadStats();
+  }
+
+  // ── Modals ─────────────────────────────────────────────────────────────────
+  function openDocModal(src) {
+    document.getElementById('modalImg').src = src;
+    document.getElementById('docModal').classList.add('open');
+  }
+  function closeDocModal() {
+    document.getElementById('docModal').classList.remove('open');
+  }
+
+  // ── Export CSV ─────────────────────────────────────────────────────────────
+  function exportCSV(type) {
+    let rows = [], filename = '';
+
+    if (type === 'users') {
+      filename = 'fixitnow_users.csv';
+      rows = [['Name', 'Email', 'Role', 'Joined']];
+      allUsers.forEach(u => rows.push([u.name, u.email, u.role, new Date(u.createdAt).toLocaleDateString()]));
+    } else if (type === 'bookings') {
+      filename = 'fixitnow_bookings.csv';
+      rows = [['Homeowner', 'Technician', 'Issue', 'Amount', 'Status', 'Payment', 'Date']];
+      allBookings.forEach(b => rows.push([
+        b.homeownerId?.name || '-',
+        b.technicianId?.name || '-',
+        `"${b.issue}"`,
+        b.totalAmount,
+        b.status,
+        b.paymentStatus,
+        new Date(b.createdAt).toLocaleDateString()
+      ]));
+    } else if (type === 'technicians') {
+      filename = 'fixitnow_technicians.csv';
+      rows = [['Name', 'Skill', 'Location', 'Price', 'Rating', 'Jobs Done', 'Available', 'Verified']];
+      allTechnicians.forEach(t => rows.push([
+        t.name, t.skill, t.location, t.price, t.rating,
+        t.jobsDone, t.available ? 'Yes' : 'No', t.isVerified ? 'Yes' : 'No'
+      ]));
+    }
+
+    const csv = rows.map(r => r.join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename; a.click();
+    URL.revokeObjectURL(url);
+  }
+</script>
+</body>
+</html>

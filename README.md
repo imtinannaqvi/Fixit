@@ -1,50 +1,119 @@
-# Welcome to your Expo app 👋
+# 🔧 FixItNow — Mobile App
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Pakistan's smartest home maintenance app. AI-powered diagnosis meets verified technicians.
 
-## Get started
+Built with **React Native + Expo Router**, this is the mobile client for the FixItNow platform.
 
-1. Install dependencies
+---
 
-   ```bash
-   npm install
-   ```
+## 📱 Screenshots
 
-2. Start the app
+> Add screenshots here once available
 
-   ```bash
-   npx expo start
-   ```
+---
 
-In the output, you'll find options to open the app in a
+## ✨ Features
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+- 🤖 **AI Diagnosis** — Upload a photo and AI instantly identifies your home issue
+- 🔍 **Find Technicians** — Browse verified professionals by skill, location, and rating
+- 📅 **Easy Booking** — Book a technician in minutes with real-time confirmation
+- 💬 **Real-time Chat** — In-app chat between homeowners and technicians via Socket.io
+- 🔔 **Live Notifications** — Instant updates on booking status
+- 🛡️ **Verified Experts** — All technicians are background checked
+- ⭐ **Reviews & Ratings** — Genuine reviews from verified customers
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+---
 
-## Get a fresh project
+## 🗂️ Project Structure
 
-When you're ready, run:
-
-```bash
-npm run reset-project
+```
+app/
+├── chat/               # Real-time chat screens
+├── tabs/               # Bottom tab navigation (homeowner dashboard)
+├── technician/         # Technician-specific screens
+├── index.tsx           # Landing/welcome screen
+├── login.tsx           # Login screen
+├── signup.tsx          # Registration screen
+├── verify-email.tsx    # Email verification screen
+├── forgot-password.tsx # Forgot password screen
+├── reset-password.tsx  # Reset password screen
+└── _layout.tsx         # Root navigation layout
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+---
 
-## Learn more
+## 🛠️ Tech Stack
 
-To learn more about developing your project with Expo, look at the following resources:
+| Technology | Purpose |
+|---|---|
+| React Native + Expo | Mobile framework |
+| Expo Router | File-based navigation |
+| TypeScript | Type safety |
+| Socket.io Client | Real-time chat |
+| Axios | API requests |
+| React Native Toast Message | In-app notifications |
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+---
 
-## Join the community
+## 🚀 Getting Started
 
-Join our community of developers creating universal apps.
+### Prerequisites
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+- Node.js 18+
+- Expo CLI
+- Expo Go app on your phone (for development)
+
+### Installation
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/imtinannaqvi/app.git
+cd app
+
+# 2. Install dependencies
+npm install
+
+# 3. Create your environment config
+# Update config.ts with your backend URL
+```
+
+### Running the App
+
+```bash
+# Start development server
+npx expo start
+
+# Scan QR code with Expo Go app on your phone
+```
+
+---
+
+## ⚙️ Configuration
+
+Update `config.ts` with your backend URLs:
+
+```ts
+export const API_URL = 'http://your-backend-url/api';
+export const BASE_URL = 'http://your-backend-url';
+```
+
+---
+
+## 🔗 Related Repositories
+
+| Repo | Description |
+|---|---|
+| [FixItNow Server](https://github.com/imtinannaqvi) | Node.js + Express + MongoDB backend |
+
+---
+
+## 👤 Author
+
+**Imtinan Naqvi**
+- GitHub: [@imtinannaqvi](https://github.com/imtinannaqvi)
+
+---
+
+## 📄 License
+
+This project is for educational/portfolio purposes.
